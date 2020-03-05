@@ -3,12 +3,12 @@
 {% block content %}
 <h1>Записи в блоге</h1>
 {% for item in news%}
-<div class="col-md6 border rounded">
+<div class="p-3 mb-2 bg-light text-dark border rounded">
     <h2>{{item.title}}</h2>
     <div>
         {{item.content}}
     </div>
-    <div>
+    <div class="lead">
         Автор - {{item.user.name}}, Дата написания - {{item.created_date}}
     </div>
 </div>
