@@ -13,6 +13,13 @@ def base(title):
     return render_template('base.html', **param)
 
 
+@app.route('/training/<prof>')
+def training(prof):
+    param = {}
+    param['prof'] = prof
+    return render_template('training.html', **param)
+
+
 def main():
     db_session.global_init("db/blogs.sqlite")
     app.run()
