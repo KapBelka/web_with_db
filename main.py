@@ -20,6 +20,15 @@ def training(prof):
     return render_template('training.html', **param)
 
 
+@app.route('/list_prof/<list>')
+def list_prof(list):
+    profs = ['инженер-исследователь', 'пилот', 'строитель', 'экзобиолог', 'врач', 'инженер по терраформированию', 'климатолог']
+    param = {}
+    param['profs'] = profs
+    param['list_type'] = list
+    return render_template('list_prof.html', **param)
+
+
 def main():
     db_session.global_init("db/blogs.sqlite")
     app.run()
