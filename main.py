@@ -73,6 +73,14 @@ def distribution():
     return render_template('distribution.html', **param)
 
 
+@app.route('/table/<sex>/<int:age>')
+def table(sex, age):
+    param = {}
+    param["sex"] = sex
+    param["age"] = age
+    return render_template('cabin.html', **param)
+
+
 def main():
     db_session.global_init("db/blogs.sqlite")
     app.run()
