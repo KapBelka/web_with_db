@@ -1,4 +1,9 @@
 from flask import Flask, render_template
+from flask_wtf import FlaskForm
+from werkzeug.utils import redirect
+from wtforms import PasswordField, SubmitField, IntegerField
+from wtforms.validators import DataRequired
+
 from data import db_session
 
 app = Flask(__name__)
@@ -42,6 +47,22 @@ def auto_answer():
     param['motivation'] = "Всегда мечтал застрять на Марсе!"
     param['ready'] = True
     return render_template('auto_answer.html', **param)
+
+
+class LoginForm(FlaskForm):
+    astronaut_id = IntegerField('Id астронавта', validators=[DataRequired()])
+    astronaut_password = PasswordField('Пароль астронавта', validators=[DataRequired()])
+    capitan_id = IntegerField('Id капитана', validators=[DataRequired()])
+    capitan_password = PasswordField('Пароль капитана', validators=[DataRequired()])
+    submit = SubmitField('Доступ')
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        return redirect('/success')
+    return render_template('login.html', title='Аварийный доступ', form=form)
 
 
 def main():
