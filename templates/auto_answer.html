@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h5>Фамилия: {{surname}}<br>
+        Имя: {{name}}<br>
+        Образование: {{education}}<br>
+        Профессия: {{profession}}<br>
+        Пол: {% if sex == 'male' %} Мужской {% else %} Женский {% endif %}<br>
+        Мотивация: {{motivation}}<br>
+        Готовы остаться на Марсе? {% if ready %} Да {% else %} Нет {% endif %}</h5>
+{% endblock %}
