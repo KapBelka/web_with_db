@@ -65,6 +65,14 @@ def login():
     return render_template('login.html', title='Аварийный доступ', form=form)
 
 
+@app.route('/distribution')
+def distribution():
+    param = {}
+    param['astronaut_list'] = ["Ридли Скотт", "Энди Уир", "Марк Уотни", "Венката Капур",
+                               "Тедди Сандерс", "Шон Бин"]
+    return render_template('distribution.html', **param)
+
+
 def main():
     db_session.global_init("db/blogs.sqlite")
     app.run()

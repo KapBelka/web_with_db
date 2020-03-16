@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2 align="center">Размещение по каютам</h2>
+    {% set temp = "Каюта №" %}
+    {% for astronaut in astronaut_list %}
+        <h5>{{astronaut}} - {{temp}} {{loop.index}}{% if loop.first %} - капитан корабля {% endif %}</h5>
+    {% endfor %}
+{% endblock %}
