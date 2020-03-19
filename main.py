@@ -1,3 +1,6 @@
+import json
+import random
+
 from flask import Flask, render_template
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileRequired, FileAllowed
@@ -109,6 +112,15 @@ def galery():
     param = {}
     param["img_items"] = img_items
     return render_template('carousel.html', form=form, **param)
+
+
+@app.route('/member')
+def member():
+    with open("templates/astronauts.json", "r", encoding='utf-8') as f:
+        data = json.load(f)
+    print(data)
+    param = data["astronauts"][random.randrange(len(data["astronauts"]))]
+    return render_template('astronaut_card.html', **param)
 
 
 def main():

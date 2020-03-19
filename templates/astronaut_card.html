@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div align="center">
+        <h3>{{ [name, surname]|join(' ') }}</h3>
+        <img src="{{ photo }}" width="400px">
+        <h5>{{ professions|join(', ') }}</h5>
+    </div>
+{% endblock %}

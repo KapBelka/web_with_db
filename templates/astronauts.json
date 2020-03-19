@@ -1,0 +1,40 @@
+{
+  "astronauts": [
+    {
+      "surname": "Скотт",
+      "name": "Ридли",
+      "photo": "http://127.0.0.1:5000/static/img/astronauts/alien1.jpg",
+      "professions": [
+        "инженер-исследователь",
+        "строитель"
+      ]
+    },
+    {
+      "surname": "Уир",
+      "name": "Энди",
+      "photo": "http://127.0.0.1:5000/static/img/astronauts/alien2.jpg",
+      "professions": [
+        "климатолог",
+        "пилот"
+      ]
+    },
+    {
+      "surname": "Уотни",
+      "name": "Марк",
+      "photo": "http://127.0.0.1:5000/static/img/astronauts/alien3.jpg",
+      "professions": [
+        "экзобиолог"
+      ]
+    },
+    {
+      "surname": "Капур",
+      "name": "Венката",
+      "photo": "http://127.0.0.1:5000/static/img/astronauts/alien4.jpg",
+      "professions": [
+        "инженер по терраформированию",
+        "строитель",
+        "пилот"
+      ]
+    }
+  ]
+}
