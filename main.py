@@ -1,8 +1,10 @@
 from flask import Flask, render_template
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileRequired, FileAllowed
 from werkzeug.utils import redirect
-from wtforms import PasswordField, SubmitField, IntegerField
+from wtforms import PasswordField, SubmitField, IntegerField, FileField
 from wtforms.validators import DataRequired
+import datetime
 
 from data import db_session
 
@@ -57,6 +59,11 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Доступ')
 
 
+class ImageForm(FlaskForm):
+    file = FileField('Добавить картинку', validators=[FileRequired(), FileAllowed(['jpg', 'png'])])
+    submit = SubmitField('Отправить')
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
@@ -79,6 +86,29 @@ def table(sex, age):
     param["sex"] = sex
     param["age"] = age
     return render_template('cabin.html', **param)
+
+
+img_items = []
+with open(f"static/config/img_items.txt", "r") as f:
+    for line in f.readlines():
+        img_items.append(line)
+
+
+@app.route('/galery', methods=['GET', 'POST'])
+def galery():
+    form = ImageForm()
+    if form.data["file"]:
+        file_name = form.data['file'].filename
+        today = datetime.datetime.today()
+        full_file_name = f"[{today.strftime('%Y-%m-%d-%H.%M.%S')}]{file_name}"
+        with open(f"static/img/{full_file_name}", "wb") as f:
+            f.write(form.data["file"].read())
+        img_items.append(full_file_name)
+        with open(f"static/config/img_items.txt", "a") as f:
+            f.write(full_file_name + "\n")
+    param = {}
+    param["img_items"] = img_items
+    return render_template('carousel.html', form=form, **param)
 
 
 def main():
