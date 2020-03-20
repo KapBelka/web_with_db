@@ -8,12 +8,30 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 
 
+def get_all_jobs(session):
+    jobs = session.query(Jobs).all()
+    return jobs
+
+
+def get_user_from_id(session, id):
+    user = session.query(User).filter(User.id == id).first()
+    return user
+
+
+def get_teamleaders_for_jobs(session, jobs):
+    teamleaders = [get_user_from_id(session, job.team_leader) for job in jobs]
+    return teamleaders
+
+
 @app.route('/')
 @app.route('/index')
 def index():
+    session = db_session.create_session()
     param = {}
-    param['username'] = "Ученик Яндекс.Лицея"
-    param['title'] = 'Приветствие'
+    jobs = get_all_jobs(session)
+    teamleaders = get_teamleaders_for_jobs(session, jobs)
+    param['jobs_list'] = jobs
+    param['team_leaders'] = teamleaders
     return render_template('index.html', **param)
 
 
@@ -48,7 +66,6 @@ def add_job(team_leader, job_desctription, work_size, collaborators, is_finished
 
 def main():
     db_session.global_init("db/mars_explorer.db")
-    add_job(1, "deployment of residential modules 1 and 2", 15, "2, 3", False)
     app.run()
 
 
