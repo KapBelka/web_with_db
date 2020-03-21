@@ -1,4 +1,5 @@
 from flask import Flask, render_template
+from flask_login import login_manager, login_user, logout_user, login_required, LoginManager
 from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
 from wtforms import *
@@ -11,6 +12,8 @@ from data.jobs import Jobs
 import datetime
 
 app = Flask(__name__)
+login_manager = LoginManager()
+login_manager.init_app(app)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 
 
@@ -27,6 +30,22 @@ class RegisterForm(FlaskForm):
     submit = SubmitField('Submit')
 
 
+class LoginForm(FlaskForm):
+    email = EmailField('Email', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    remember_me = BooleanField('Remember me')
+    submit = SubmitField('Submit')
+
+
+class JobAddForm(FlaskForm):
+    job_title = StringField('Job Title', validators=[DataRequired()])
+    team_leader = IntegerField('Team Leader id', validators=[DataRequired()])
+    work_size = IntegerField('Work Size', validators=[DataRequired()])
+    collaborators = StringField('Collaborators', validators=[DataRequired()])
+    is_job_finished = BooleanField('Is job finished?')
+    submit = SubmitField('Submit')
+
+
 def get_all_jobs(session):
     jobs = session.query(Jobs).all()
     return jobs
@@ -40,6 +59,12 @@ def get_user_from_id(session, id):
 def get_teamleaders_for_jobs(session, jobs):
     teamleaders = [get_user_from_id(session, job.team_leader) for job in jobs]
     return teamleaders
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    session = db_session.create_session()
+    return session.query(User).get(user_id)
 
 
 @app.route('/')
@@ -83,33 +108,45 @@ def register():
     return render_template('register.html', title='Регистрация', form=form)
 
 
-def add_colonist(surname, name, age, position, speciality, address, email, hashed_password):
-    session = db_session.create_session()
-    user = User()
-    user.surname = surname
-    user.name = name
-    user.age = age
-    user.position = position
-    user.speciality = speciality
-    user.address = address
-    user.email = email
-    user.hashed_password = hashed_password
-    session.add(user)
-    session.commit()
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        session = db_session.create_session()
+        user = session.query(User).filter(User.email == form.email.data).first()
+        if user and user.check_password(form.password.data):
+            login_user(user, remember=form.remember_me.data)
+            return redirect("/")
+        return render_template('login.html',
+                               message="Неправильный логин или пароль",
+                               form=form)
+    return render_template('login.html', title='Авторизация', form=form)
 
 
-def add_job(team_leader, job_desctription, work_size, collaborators, is_finished,
-            start_date=datetime.datetime.now()):
-    session = db_session.create_session()
-    job = Jobs()
-    job.team_leader = team_leader
-    job.job = job_desctription
-    job.work_size = work_size
-    job.collaborators = collaborators
-    job.start_date = start_date
-    job.is_finished = is_finished
-    session.add(job)
-    session.commit()
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect("/")
+
+
+@app.route('/job_add',  methods=['GET', 'POST'])
+def job_add():
+    form = JobAddForm()
+    if form.validate_on_submit():
+        print(1)
+        session = db_session.create_session()
+        job = Jobs(
+            team_leader=form.team_leader.data,
+            job=form.job_title.data,
+            work_size=form.work_size.data,
+            collaborators=form.collaborators.data,
+            is_finished=form.is_job_finished.data
+        )
+        session.add(job)
+        session.commit()
+        return redirect('/index')
+    return render_template('job_add.html', title='Добавление работы', form=form)
 
 
 def main():
