@@ -1,4 +1,3 @@
-import flask_login
 from flask import Flask, render_template, request
 from flask_login import login_manager, login_user, logout_user, login_required, LoginManager, \
     current_user
@@ -10,6 +9,7 @@ from wtforms.fields.html5 import *
 from wtforms.validators import DataRequired
 
 from data import db_session
+from data.departments import Departments
 from data.users import User
 from data.jobs import Jobs
 import datetime
@@ -48,6 +48,13 @@ class JobAddForm(FlaskForm):
     submit = SubmitField('Submit')
 
 
+class DepartmentAddForm(FlaskForm):
+    title = StringField('Title', validators=[DataRequired()])
+    members = StringField('members', validators=[DataRequired()])
+    email = EmailField('email', validators=[DataRequired()])
+    submit = SubmitField('Submit')
+
+
 def get_all_jobs(session):
     jobs = session.query(Jobs).all()
     return jobs
@@ -61,6 +68,16 @@ def get_user_from_id(session, id):
 def get_teamleaders_for_jobs(session, jobs):
     teamleaders = [get_user_from_id(session, job.team_leader) for job in jobs]
     return teamleaders
+
+
+def get_all_deparments(session):
+    departments = session.query(Departments).all()
+    return departments
+
+
+def get_chiefs_for_departments(session, departments):
+    chiefs = [get_user_from_id(session, department.chief) for department in departments]
+    return chiefs
 
 
 @login_manager.user_loader
@@ -194,6 +211,82 @@ def job_delete(id):
     else:
         abort(404)
     return redirect('/')
+
+
+@app.route('/departments')
+def departments():
+    session = db_session.create_session()
+    param = {}
+    deparments = get_all_deparments(session)
+    chiefs = get_chiefs_for_departments(session, deparments)
+    param['departments_list'] = deparments
+    param['chiefs'] = chiefs
+    print(param)
+    return render_template('departments.html', **param)
+
+
+@app.route('/department_add',  methods=['GET', 'POST'])
+@login_required
+def department_add():
+    form = DepartmentAddForm()
+    if form.validate_on_submit():
+        session = db_session.create_session()
+        department = Departments(
+            chief=current_user.id,
+            title=form.title.data,
+            members=form.members.data,
+            email=form.email.data
+        )
+        session.add(department)
+        session.commit()
+        return redirect('/departments')
+    return render_template('department_add.html', title='Добавление департамента', form=form)
+
+
+@app.route('/department_edit/<int:id>',  methods=['GET', 'POST'])
+@login_required
+def department_edit(id):
+    form = DepartmentAddForm()
+    if request.method == "GET":
+        session = db_session.create_session()
+        department = session.query(Departments).filter(Departments.id == id,
+                                                       ((Departments.chief == current_user.id) |
+                                                        (current_user.id == 1))).first()
+        if department:
+            form.email.data = department.email
+            form.members.data = department.members
+            form.title.data = department.title
+        else:
+            abort(404)
+    if form.validate_on_submit():
+        session = db_session.create_session()
+        department = session.query(Departments).filter(Departments.id == id,
+                                                       ((Departments.chief == current_user.id) |
+                                                        (current_user.id == 1))).first()
+        if department:
+            department.email = form.email.data
+            department.members = form.members.data
+            department.title = form.title.data
+            session.commit()
+            return redirect('/departments')
+        else:
+            abort(404)
+    return render_template('department_add.html', title='Добавление работы', form=form)
+
+
+@app.route('/department_delete/<int:id>', methods=['GET', 'POST'])
+@login_required
+def department_delete(id):
+    session = db_session.create_session()
+    department = session.query(Departments).filter(Departments.id == id,
+                                                   ((Departments.chief == current_user.id) |
+                                                    (current_user.id == 1))).first()
+    if department:
+        session.delete(department)
+        session.commit()
+    else:
+        abort(404)
+    return redirect('/departments')
 
 
 def main():

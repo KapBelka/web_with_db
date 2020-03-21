@@ -3,6 +3,7 @@
 {% block content %}
     <div>
         <h2 align="center">Works Log</h2>
+        <a href="/departments" class="btn btn-secondary">To Departments</a>
         {% if current_user.is_authenticated %}
             <a href="/job_add" class="btn btn-secondary">Add Job</a>
         {% endif %}
