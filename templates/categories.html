@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div>
+        <h2 align="center">Categories List</h2>
+        <a href="/index" class="btn btn-secondary">To Jobs</a>
+        {% if current_user.is_authenticated and current_user.id == 1 %}
+            <a href="/category_add" class="btn btn-secondary">Add Category</a>
+        {% endif %}
+        {% for category in categories %}
+            <h3 align="left">category #{{category.id}} - {{category.name}}</h3>
+            {% if current_user.is_authenticated and current_user.id == 1 %}
+                <div>
+                    <a href="/category_edit/{{ category.id }}" class="btn btn-warning">Edit</a>
+                    <a href="/category_delete/{{ category.id }}" class="btn btn-danger">Delete</a>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endblock %}

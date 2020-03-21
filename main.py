@@ -9,6 +9,7 @@ from wtforms.fields.html5 import *
 from wtforms.validators import DataRequired
 
 from data import db_session
+from data.categories import Category
 from data.departments import Departments
 from data.users import User
 from data.jobs import Jobs
@@ -44,6 +45,7 @@ class JobAddForm(FlaskForm):
     job_title = StringField('Job Title', validators=[DataRequired()])
     work_size = IntegerField('Work Size', validators=[DataRequired()])
     collaborators = StringField('Collaborators', validators=[DataRequired()])
+    categories = StringField('Categories', validators=[DataRequired()])
     is_job_finished = BooleanField('Is job finished?')
     submit = SubmitField('Submit')
 
@@ -52,6 +54,11 @@ class DepartmentAddForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired()])
     members = StringField('members', validators=[DataRequired()])
     email = EmailField('email', validators=[DataRequired()])
+    submit = SubmitField('Submit')
+
+
+class CategoryAddForm(FlaskForm):
+    name = StringField('Name', validators=[DataRequired()])
     submit = SubmitField('Submit')
 
 
@@ -70,6 +77,16 @@ def get_teamleaders_for_jobs(session, jobs):
     return teamleaders
 
 
+def get_categories_for_jobs(session, jobs):
+    categories = []
+    for job in jobs:
+        temp = []
+        for category in job.categories:
+            temp.append(str(category.id))
+        categories.append(', '.join(temp))
+    return categories
+
+
 def get_all_deparments(session):
     departments = session.query(Departments).all()
     return departments
@@ -78,6 +95,11 @@ def get_all_deparments(session):
 def get_chiefs_for_departments(session, departments):
     chiefs = [get_user_from_id(session, department.chief) for department in departments]
     return chiefs
+
+
+def get_all_categories(session):
+    categories = session.query(Category).all()
+    return categories
 
 
 @login_manager.user_loader
@@ -93,8 +115,10 @@ def index():
     param = {}
     jobs = get_all_jobs(session)
     teamleaders = get_teamleaders_for_jobs(session, jobs)
+    categories = get_categories_for_jobs(session, jobs)
     param['jobs_list'] = jobs
     param['team_leaders'] = teamleaders
+    param['categories'] = categories
     return render_template('index.html', **param)
 
 
@@ -160,8 +184,12 @@ def job_add():
             job=form.job_title.data,
             work_size=form.work_size.data,
             collaborators=form.collaborators.data,
-            is_finished=form.is_job_finished.data,
+            is_finished=form.is_job_finished.data
         )
+        for category_id in form.categories.data.split(', '):
+            category = session.query(Category).filter(Category.id == category_id).first()
+            if category:
+                job.categories.append(category)
         session.add(job)
         session.commit()
         return redirect('/index')
@@ -181,6 +209,7 @@ def job_edit(id):
             form.work_size.data = job.work_size
             form.collaborators.data = job.collaborators
             form.is_job_finished.data = job.is_finished
+            form.categories.data = ', '.join([str(category.id) for category in job.categories])
         else:
             abort(404)
     if form.validate_on_submit():
@@ -192,6 +221,14 @@ def job_edit(id):
             job.work_size = form.work_size.data
             job.collaborators = form.collaborators.data
             job.is_finished = form.is_job_finished.data
+            temp = form.categories.data.split(', ')
+            for category_id in temp:
+                category = session.query(Category).filter(Category.id == category_id).first()
+                if category and category not in job.categories:
+                    job.categories.append(category)
+            for category in list(job.categories):
+                if str(category.id) not in temp:
+                    job.categories.remove(category)
             session.commit()
             return redirect('/index')
         else:
@@ -221,7 +258,6 @@ def departments():
     chiefs = get_chiefs_for_departments(session, deparments)
     param['departments_list'] = deparments
     param['chiefs'] = chiefs
-    print(param)
     return render_template('departments.html', **param)
 
 
@@ -287,6 +323,66 @@ def department_delete(id):
     else:
         abort(404)
     return redirect('/departments')
+
+
+@app.route('/categories')
+def categories():
+    session = db_session.create_session()
+    param = {}
+    categories = get_all_categories(session)
+    param['categories'] = categories
+    return render_template('categories.html', **param)
+
+
+@app.route('/category_add',  methods=['GET', 'POST'])
+@login_required
+def category_add():
+    form = CategoryAddForm()
+    if form.validate_on_submit():
+        session = db_session.create_session()
+        category = Category(
+            name=form.name.data
+        )
+        session.add(category)
+        session.commit()
+        return redirect('/categories')
+    return render_template('category_add.html', title='Добавление категории', form=form)
+
+
+@app.route('/category_edit/<int:id>',  methods=['GET', 'POST'])
+@login_required
+def category_edit(id):
+    form = CategoryAddForm()
+    if request.method == "GET":
+        session = db_session.create_session()
+        category = session.query(Category).filter(Category.id == id, current_user.id == 1).first()
+        if category:
+            form.name.data = category.name
+        else:
+            abort(404)
+    if form.validate_on_submit():
+        session = db_session.create_session()
+        category = session.query(Category).filter(Category.id == id, current_user.id == 1).first()
+        if category:
+            category.name = form.name.data
+            session.commit()
+            return redirect('/categories')
+        else:
+            abort(404)
+    return render_template('category_add.html', title='Добавление работы', form=form)
+
+
+@app.route('/category_delete/<int:id>', methods=['GET', 'POST'])
+@login_required
+def category_delete(id):
+    session = db_session.create_session()
+    category = session.query(Category).filter(Category.id == id, current_user.id == 1).first()
+    if category:
+        session.delete(category)
+        session.commit()
+    else:
+        abort(404)
+    return redirect('/categories')
 
 
 def main():

@@ -1,4 +1,5 @@
 import sqlalchemy
+import sqlalchemy.orm as orm
 
 from .db_session import SqlAlchemyBase
 
@@ -16,3 +17,6 @@ class Jobs(SqlAlchemyBase):
     start_date = sqlalchemy.Column(sqlalchemy.DateTime, nullable=True)
     end_date = sqlalchemy.Column(sqlalchemy.DateTime, nullable=True)
     is_finished = sqlalchemy.Column(sqlalchemy.Boolean, nullable=True)
+    categories = orm.relation("Category",
+                              secondary="jobs_to_categories",
+                              backref="jobs")
