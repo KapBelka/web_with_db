@@ -1,13 +1,17 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, make_response, jsonify
 from flask_login import login_manager, login_user, logout_user, login_required, LoginManager, \
     current_user
+from flask_restful import reqparse, abort, Api, Resource
 from flask_wtf import FlaskForm
 from werkzeug.exceptions import abort
 from werkzeug.utils import redirect
 from wtforms import *
 from wtforms.fields.html5 import *
 from wtforms.validators import DataRequired
+from requests import get
 
+import users_resourse
+import jobs_api, users_api
 from data import db_session
 from data.categories import Category
 from data.departments import Departments
@@ -16,6 +20,7 @@ from data.jobs import Jobs
 import datetime
 
 app = Flask(__name__)
+api = Api(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
@@ -116,6 +121,7 @@ def index():
     jobs = get_all_jobs(session)
     teamleaders = get_teamleaders_for_jobs(session, jobs)
     categories = get_categories_for_jobs(session, jobs)
+    print(get('http://127.0.0.1:5000/api/users'))
     param['jobs_list'] = jobs
     param['team_leaders'] = teamleaders
     param['categories'] = categories
@@ -385,8 +391,17 @@ def category_delete(id):
     return redirect('/categories')
 
 
+@app.errorhandler(404)
+def not_found(error):
+    return make_response(jsonify({'error': 'Not found'}), 404)
+
+
 def main():
     db_session.global_init("db/mars_explorer.db")
+    app.register_blueprint(jobs_api.blueprint)
+    app.register_blueprint(users_api.blueprint)
+    api.add_resource(users_resourse.UsersResource, '/api/v2/users/<int:user_id>') 
+    api.add_resource(users_resourse.UsersListResource, '/api/v2/users') 
     app.run()
 
 
