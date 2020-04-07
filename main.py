@@ -391,6 +391,55 @@ def category_delete(id):
     return redirect('/categories')
 
 
+def get_map_part_from_city(city_name):
+    geocode_api_server = "http://geocode-maps.yandex.ru/1.x/"
+    api_key = "40d1649f-0493-4b70-98ba-98533de7710b"
+    params = {
+        "apikey": api_key,
+        "geocode": city_name,
+        "format": "json"
+    }
+    response = get(geocode_api_server, params=params)
+    if not response:
+        abort(404)
+    json_response = response.json()
+    toponym = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
+    toponym_address = toponym["metaDataProperty"]["GeocoderMetaData"]["text"]
+    toponym_coordinates = toponym["Point"]["pos"]
+    coords = toponym_coordinates.split(' ')
+    map_params = {
+        "l": "sat",
+        "spn": "0.05,0.05",
+        "ll": ','.join(coords)
+    }
+    map_api_server = "http://static-maps.yandex.ru/1.x/"
+    response = get(map_api_server, params=map_params)
+    if not response:
+        abort(404)
+    map_file = "map.png"
+    with open(f"static/img/{map_file}", "wb") as file:
+        file.write(response.content)
+    return map_file
+
+
+@app.route('/users_show/<int:user_id>')
+def users_show(user_id):
+    response = get(f"http://127.0.0.1:5000/api/v2/users/{user_id}")
+    if not response:
+        abort(404)
+    json_response = response.json()
+    user = json_response['users'][0]
+    city_from = user['city_from']
+    map_file = get_map_part_from_city(city_from)
+    param = {
+        'city_from': city_from,
+        'name': user['name'],
+        'surname': user['surname'],
+        'map_file': map_file
+    }
+    return render_template('users_show.html', title='Hometown', **param)
+
+
 @app.errorhandler(404)
 def not_found(error):
     return make_response(jsonify({'error': 'Not found'}), 404)
