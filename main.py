@@ -11,6 +11,7 @@ from wtforms.validators import DataRequired
 from requests import get
 
 import users_resourse
+import jobs_resourse
 import jobs_api, users_api
 from data import db_session
 from data.categories import Category
@@ -451,6 +452,8 @@ def main():
     app.register_blueprint(users_api.blueprint)
     api.add_resource(users_resourse.UsersResource, '/api/v2/users/<int:user_id>') 
     api.add_resource(users_resourse.UsersListResource, '/api/v2/users') 
+    api.add_resource(jobs_resourse.JobsResource, '/api/v2/jobs/<int:user_id>') 
+    api.add_resource(jobs_resourse.JobsListResource, '/api/v2/jobs') 
     app.run()
 
 
